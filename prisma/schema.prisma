@@ -1,0 +1,41 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Category {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  scenario  Scenario[]
+  parentId  String     @default("")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Scenario {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  prompt     String
+  params     Json
+  Category   Category? @relation(fields: [categoryId], references: [id])
+  categoryId String?   @db.ObjectId
+}
+
+enum RequestStatus {
+  PENDING
+  COMPLETED
+}
+
+model GptRequest {
+  id         String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String
+  scenarioId String
+  params     Json
+  status     RequestStatus @default(PENDING)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+}
