@@ -5,6 +5,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 @Module({
   providers: [ScenarioService, PrismaService],
-  controllers: [ScenarioController]
+  controllers: [ScenarioController],
+  exports: [ScenarioService],
 })
 export class ScenarioModule {}

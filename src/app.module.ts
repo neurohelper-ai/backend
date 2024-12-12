@@ -7,9 +7,15 @@ import { AiModule } from './ai/ai.module';
 import { UserService } from './user/user.service';
 import { UserModule } from './user/user.module';
 
-
 @Module({
-  imports: [PrismaModule, CategoryModule, AuthModule, ScenarioModule, AiModule, UserModule],
+  imports: [
+    PrismaModule,
+    CategoryModule,
+    AuthModule,
+    ScenarioModule,
+    AiModule,
+    UserModule,
+  ],
   controllers: [],
   providers: [UserService],
 })

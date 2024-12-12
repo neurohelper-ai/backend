@@ -8,6 +8,6 @@ export class AiController {
 
   @Post('execute_gpt')
   execute_gpt(@Body() body: ExecuteTextDto) {
-    return this.aiService.execute(body.id, body.model, body.params);
+    return this.aiService.execute('', body.id, body.model, body.params);
   }
 }

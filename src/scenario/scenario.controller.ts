@@ -4,7 +4,7 @@ import { ScenarioService } from './scenario.service';
 
 @Controller('scenario')
 export class ScenarioController {
-    constructor(private readonly scenarioService: ScenarioService) {}
+  constructor(private readonly scenarioService: ScenarioService) {}
 
   @Post()
   create(@Body() createScenarioDto: CreateScenarioDto) {
@@ -15,5 +15,4 @@ export class ScenarioController {
   findOne(@Param('id') id: string) {
     return this.scenarioService.findOne(id);
   }
-
 }
