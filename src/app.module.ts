@@ -6,6 +6,7 @@ import { ScenarioModule } from './scenario/scenario.module';
 import { AiModule } from './ai/ai.module';
 import { UserService } from './user/user.service';
 import { UserModule } from './user/user.module';
+import { FirebaseAuthModule } from './firebase-auth/firebase-auth.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { UserModule } from './user/user.module';
     ScenarioModule,
     AiModule,
     UserModule,
+    FirebaseAuthModule,
   ],
   controllers: [],
   providers: [UserService],

@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "neurohelper-ai",
+  "private_key_id": "ede1be3563d8a0a2f82fcb006364175271a2b6aa",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCt+QuTYdlvwdvv\nalaDKaI//m0WvD/gniiQiZ3nvL+qJJ17exzQS5PHZoypUGya46CGgqJDgQ+KV8+Y\nQGBAnHCcEpttNhasrwNqCEooEtDSq8JqTJD0ZJytqtUT/KJVMKtS/Yfrfsp+fpgb\nRESvalE1gXEkQjr5o4xAtmRpPokcW8g0nVkhBhfG+C2lWNW/eRQWQt47bhCL39G6\nwmlBW/mkDL9cr8n6acJ7/yqW5TdZF5fXLZBMH+WY6ute2Fxkvd22zq20LGIfSJBR\nKT63lCAS8rvbhXyip9iYzP35ZTGBQkJN2+Y/XQqndsuVjhfxo0enXT5bQl5g/S+a\nyUaoaKkJAgMBAAECggEARAzNhVnZ9ogK4oxiyK1pZMS9oQ4DonXbAiaCWJoREpl9\n7EYM0EEvzeiEDtqBkNiG+vZwSB1cmc2dSz2rKLrIpZP1rfNhTSysFjal4yTw/+bl\nhjTq4l3Ul23iKQ5B5TbDXRQErY4L4QzdrJS4lTDuERLP0dICRZG+k7WEc1JdyXRL\nkEJHQBn+4RIPhwhvHRfrSLl2oheVVsvEg6XrDDlz1y1jmkU1vqvbs6xTuo+uAMNB\nUsKqdu/TKucRv2lJK6c8ROov2JZONl2rywB/zIBQpTwAFkqevaTLVAWb+92gNr5x\nBPJJF0GWgCf83SwHr+m7KECNgFpEt7USiVXGoyh9PQKBgQDmaGxV12D7Eou2IEOK\nu15HqIShM08WN1VEtVvLykOZcBCLo9c4N0iH5eQ3asXl7OE9X2Gy4vAJqftiu3WW\nc2kaxQAJt9A9Q2/4vLGFRdIOVMA0URghYZEOdFs9zcRo5h6oy08MqIPyesjI3jgh\nJp7L7pLsQv1pEwzS9m5r6CneZwKBgQDBS+iOiyIKoPsbGvLb0BNTMq+29Z/HBs5x\n521wVeK379N4TTwnMGoTVa7dF/nNv5DWvObn2cAKe4BKEaec/9E2TiqWVjIS0RT6\nW7E/a9M24v2ZPl01TbJJjM1ipL8SSBYH00RMfJtr0p4zt7JE7UGrPz1JNTjapCIX\naZ9AUp+3DwKBgQC6CGgoay03q0K4+5XtRtmZvBvSWC4r/uNPBaungJlSIySIyvHz\nxtc+OsUoZYKB4d//AKtOl2M+Okvp7PfFUUv0vEkKj6qIPJIE4L3ooHY48f76ftuf\n4DoR1Kry3NgP5nWszfL2gn1+49qILLxfL+KZP/jK4E/hbes1zplbcOmVUwKBgQC8\nmd0yYAz6A/Kekt/NnCuO7RDH2sdoQXrjZqTAi/xn7kgOxIVh03pcnSi+LyudFkIz\nVCOUq0EWuUQGgU1jAbRXYVNqVnYLKBho41iBgiqXDknU4SW+4a2I2Cp6Cjcolk9w\nmTG104suXFXiLmVxnXGKrmyU5qovoyBkablp4HRX/wKBgCf4xY6b3YUw3hYnMP/U\nIY4Fa2UhDzLxTl+EQxxViWhuhtiqv/lwFfLlhfXWfpzOEVaSOpVLB436SfwWay7G\nmTOVAe6jOjh8STQ3vEbwefI35U9Crf4MwIlwH8bgTYjmDORMNf6sY8ADC0oxiQDp\naajTe+2InS8UbIC6GcNUqk0d\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-ars06@neurohelper-ai.iam.gserviceaccount.com",
+  "client_id": "100482749936957188459",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-ars06%40neurohelper-ai.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
