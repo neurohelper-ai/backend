@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Req } from '@nestjs/common';
 import { CreateScenarioDto } from './dto/create-scenario.dto';
 import { ScenarioService } from './scenario.service';
 
@@ -7,7 +7,8 @@ export class ScenarioController {
   constructor(private readonly scenarioService: ScenarioService) {}
 
   @Post()
-  create(@Body() createScenarioDto: CreateScenarioDto) {
+  create(@Body() createScenarioDto: CreateScenarioDto, @Req() req) {
+    console.log(req.user);
     return this.scenarioService.create(createScenarioDto);
   }
 

@@ -41,7 +41,7 @@ export class CategoryController {
     const category = await this.categoryService.getCategoryByParent(parentId);
     try {
       scenario = parentId && (await this.scenarioService.findAll(parentId));
-    } catch(e) {
+    } catch (e) {
       console.log(e);
     }
 
