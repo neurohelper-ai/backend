@@ -10,6 +10,8 @@ generator client {
 model Category {
   id        String     @id @default(auto()) @map("_id") @db.ObjectId
   name      String
+  description String?
+  coverUrl  String    @default("https://api-dev-minimal-v610.pages.dev/assets/images/cover/cover-2.webp")
   scenario  Scenario[]
   parentId  String     @default("")
   createdAt DateTime   @default(now())
@@ -21,6 +23,7 @@ model Scenario {
   name       String
   prompt     String
   params     Json
+  description String?
   Category   Category? @relation(fields: [categoryId], references: [id])
   categoryId String?   @db.ObjectId
 }

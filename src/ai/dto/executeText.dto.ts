@@ -4,6 +4,7 @@ export class ExecuteTextDto {
   @IsString()
   id: string;
 
+  @IsOptional()
   @IsString()
   model: string;
 

@@ -13,6 +13,7 @@ export class CategoryService {
     return await this.prisma.category.create({
       data: {
         name: createCategoryDto.name,
+        description: createCategoryDto.description,
         parentId: createCategoryDto.parentId,
       },
     });
@@ -35,6 +36,9 @@ export class CategoryService {
     return await this.prisma.category.findMany({
       where: {
         parentId: parentId,
+      },
+      include: {
+        scenario: !!parentId.length,
       },
     });
   }

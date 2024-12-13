@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateScenarioDto } from './dto/create-scenario.dto';
 import { UpdateScenarioDto } from './dto/update-scenario.dto';
-
+import { Prisma } from '@prisma/client';
 @Injectable()
 export class ScenarioService {
   constructor(private prisma: PrismaService) {}
@@ -60,6 +60,14 @@ export class ScenarioService {
       throw new NotFoundException(`Scenario with ID ${id} not found`);
     }
     return scenario;
+  }
+
+  async findAll(categoryId: string) {
+    return this.prisma.scenario.findMany({
+      where: {
+        categoryId,
+      },
+    });
   }
 
   async remove(id: string) {

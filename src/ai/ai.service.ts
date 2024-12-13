@@ -41,10 +41,13 @@ export class AiService {
     let { prompt } = scenario;
     if (params && params.length) {
       params.forEach(({ placeholder, value }) => {
-        prompt = prompt.replace(new RegExp(placeholder, 'g'), value);
+        prompt = prompt.replace(placeholder, value);
       });
     }
 
+    if (!model) {
+      model = 'gpt-4o-mini';
+    }
     if (!modelsList.includes(model)) {
       throw new Error('Invalid model');
     }
@@ -62,5 +65,6 @@ export class AiService {
     );
 
     this.userService.withdraw(userId, tokenUsed);
+    return chatCompletion.choices[0].message.content;
   }
 }
