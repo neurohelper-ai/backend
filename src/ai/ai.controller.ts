@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Req } from '@nestjs/common';
+import { Controller, Post, Body, Req, Get, Query } from '@nestjs/common';
 import { ExecuteTextDto } from './dto/executeText.dto';
 import { AiService } from './ai.service';
 import { User } from '@prisma/client';
@@ -24,11 +24,23 @@ export class AiController {
       body.id,
       body.model,
       body.params,
+      user.id,
+      body.chatId,
     );
     await this.userService.withdraw(user.id, response.tokenUsed);
     return {
       success: true,
       response,
+    };
+  }
+
+  @Get('get_chat_history')
+  async get_chat_history(@Req() req, @Query('chatId') chatId: string) {
+    const user: User = req.user;
+    const chatHistory = await this.aiService.getChatHistory(user.id, chatId);
+    return {
+      success: true,
+      chatHistory,
     };
   }
 }

@@ -11,4 +11,8 @@ export class ExecuteTextDto {
   @IsOptional()
   @IsJSON()
   params: { placeholder: string; value: string }[];
+
+  @IsOptional()
+  @IsString()
+  chatId?: string;
 }

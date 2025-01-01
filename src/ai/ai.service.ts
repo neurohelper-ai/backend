@@ -1,12 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { ScenarioService } from 'src/scenario/scenario.service';
+import { ConfigService } from '@nestjs/config';
 
 import OpenAI from 'openai';
 import { UserService } from 'src/user/user.service';
-
-const client = new OpenAI({
-  apiKey: process.env['OPENAI_API_KEY'], // This is the default and can be omitted
-});
+import { PrismaService } from 'src/prisma/prisma.service';
 
 const modelsList = ['chatgpt-4o-latest', 'gpt-4o-mini'];
 
@@ -28,14 +26,21 @@ export class AiService {
   constructor(
     private scenarioService: ScenarioService,
     private userService: UserService,
+    private configService: ConfigService,
+    private prisma: PrismaService,
   ) {}
 
   async execute(
     scenarioId: string,
     model: string,
     params: { placeholder: string; value: string }[],
+    userId: string,
+    chatId?: string,
   ) {
     const scenario = await this.scenarioService.findOne(scenarioId);
+    const client = new OpenAI({
+      apiKey: this.configService.get<string>('OPENAI_API_KEY'),
+    });
 
     let { prompt } = scenario;
     if (params && params.length) {
@@ -64,27 +69,27 @@ export class AiService {
     );
     console.log('tokenUsed', tokenUsed);
 
-    return { answer: chatCompletion.choices[0].message.content, tokenUsed };
+    const answer = chatCompletion.choices[0].message.content;
+    await this.addToHistory(userId, prompt, answer, chatId);
+
+    return { answer, tokenUsed };
+  }
+
+  async addToHistory(userId: string, prompt: string, answer: string, chatId?: string) {
+    await this.prisma.chatHistory.create({
+      data: {
+        userId,
+        prompt,
+        answer,
+        chatId,
+      },
+    });
+  }
+
+  async getChatHistory(userId: string, chatId?: string) {
+    return this.prisma.chatHistory.findMany({
+      where: { userId, chatId },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 }
-`
-Greece is renowned for its diverse and delicious cuisine, and the best food can be found throughout the country, often featuring fresh, local ingredients and traditional recipes. Here are some notable regions and cities where you can experience exceptional Greek food:
-
-1. **Athens**: The capital is a vibrant hub for food lovers. You can find everything from street food at the famous Central Market to fine dining. Don't miss trying souvlaki, moussaka, and traditional meze.
-
-2. **Santorini**: Known for its stunning views and unique volcanic soil, Santorini offers delicious local dishes. Try fresh seafood, fava (split pea puree), and local wines such as Assyrtiko.
-
-3. **Crete**: The largest Greek island boasts its own distinct culinary traditions. Cretan cuisine emphasizes fresh vegetables, olive oil, and local cheese. Don't miss trying dakos (Cretan barley rusk), raki, and traditional lamb dishes.
-
-4. **Thessaloniki**: Known for its rich gastronomy, this northern city offers diverse flavors influenced by various cultures. Try the local delicacies like bougatsa (savory pastry) and gyros.
-
-5. **Peloponnese**: This region is famous for its agricultural products, including olives, figs, and meats. Enjoy local dishes such as sweet basil sauce with pasta and fresh seafood.
-
-6. **Nafplio**: This picturesque town is known for its excellent tavernas serving regional specialties. Look for dishes featuring fresh fish, local cheeses, and flavorful vegetable stews.
-
-7. **Meteora**: While primarily known for its monasteries, Meteora also offers great local food. Try traditional Greek dishes at the local tavernas while enjoying stunning views.
-
-8. **Island Hopping**: Each Greek island has unique flavors. For example, seafood is a must on the Cyclades, while the Dodecanese islands have fabulous meze platters.
-
-When visiting Greece, exploring local tavernas and markets is a wonderful way to experience authentic flavors. Don't forget to savor traditional desserts like baklava and loukoum as well!
-`

@@ -7,11 +7,14 @@ import { AiModule } from './ai/ai.module';
 import { UserService } from './user/user.service';
 import { UserModule } from './user/user.module';
 import { FirebaseAuthModule } from './firebase-auth/firebase-auth.module';
-import { JwtService, JwtModule } from '@nestjs/jwt';
 import { JwtDecodeMiddleware } from './utils/jwt-decode.middleware';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     PrismaModule,
     CategoryModule,
     AuthModule,

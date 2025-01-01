@@ -21,7 +21,7 @@ export class CategoryController {
     private readonly scenarioService: ScenarioService,
   ) {}
 
-  @Post('create')
+  @Post('/create')
   addChild(@Body() createCategoryDto: CreateCategoryDto) {
     return this.categoryService.create(createCategoryDto);
   }
