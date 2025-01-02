@@ -7,6 +7,7 @@ import { AiModule } from './ai/ai.module';
 import { UserService } from './user/user.service';
 import { UserModule } from './user/user.module';
 import { FirebaseAuthModule } from './firebase-auth/firebase-auth.module';
+import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { FirebaseAuthModule } from './firebase-auth/firebase-auth.module';
     AiModule,
     UserModule,
     FirebaseAuthModule,
+    MongooseModule.forRoot('mongodb://localhost:27017/neiro')
   ],
   controllers: [],
   providers: [UserService],

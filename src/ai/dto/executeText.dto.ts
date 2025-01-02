@@ -6,7 +6,9 @@ export class ExecuteTextDto {
 
     @IsString()
     model: string;
-
+    
+    @IsString()
+    scenarioId: string;
 
     @IsOptional()
     @IsJSON()

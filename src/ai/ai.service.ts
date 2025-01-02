@@ -5,7 +5,7 @@ import OpenAI from 'openai';
 import { UserService } from 'src/user/user.service';
 
 const client = new OpenAI({
-    apiKey: process.env['OPENAI_API_KEY'], // This is the default and can be omitted
+    apiKey: process.env['OPENAI_API_KEY'],
 });
 
 
@@ -15,6 +15,7 @@ const modelsList = [
 ]
 
 const modelsPrices = [
+    
     {
         name: 'chatgpt-4o-latest',
         inPrice: 5,
@@ -25,6 +26,7 @@ const modelsPrices = [
         inPrice: 0.150,
         outPrice: 0.075 
     }
+
 ]
 
 @Injectable()
@@ -60,8 +62,4 @@ export class AiService {
         this.userService.withdraw(userId, tokenUsed);
 
     }
-
-    
-
-
 }
