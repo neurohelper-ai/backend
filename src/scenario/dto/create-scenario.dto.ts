@@ -8,7 +8,7 @@ export class CreateScenarioDto {
   prompt: string;
 
   @IsJSON()
-  params: {placeholder: string, name: string, type: string}[];
+  params: { placeholder: string; name: string; type: string }[];
 
   @IsOptional()
   @IsString()

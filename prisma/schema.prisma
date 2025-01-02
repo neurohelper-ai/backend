@@ -8,8 +8,10 @@ generator client {
 }
 
 model Category {
-  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  id        String     @id @default(uuid()) @map("_id") @db.Uuid
   name      String
+  description String?
+  coverUrl  String    @default("https://api-dev-minimal-v610.pages.dev/assets/images/cover/cover-2.webp")
   scenario  Scenario[]
   parentId  String     @default("")
   createdAt DateTime   @default(now())
@@ -17,10 +19,11 @@ model Category {
 }
 
 model Scenario {
-  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  id         String    @id @default(uuid()) @map("_id") @db.Uuid
   name       String
   prompt     String
   params     Json
+  description String?
   Category   Category? @relation(fields: [categoryId], references: [id])
   categoryId String?   @db.ObjectId
 }
@@ -31,7 +34,7 @@ enum RequestStatus {
 }
 
 model GptRequest {
-  id         String        @id @default(auto()) @map("_id") @db.ObjectId
+  id         String        @id @default(uuid()) @map("_id") @db.Uuid
   userId     String
   scenarioId String
   params     Json
@@ -39,3 +42,47 @@ model GptRequest {
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
 }
+
+model User {
+  id        String    @id @default(uuid()) @map("_id") @db.Uuid
+  email     String    @unique
+  tokens    Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Plan {
+  id        String    @id @default(uuid()) @map("_id") @db.Uuid
+  name      String
+  price     Float
+  duration  Int
+  tokens    Int
+  features  String[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Subscription {
+  id        String    @id @default(uuid()) @map("_id") @db.Uuid
+  userId    String
+  planId    String
+  status    SubscriptionStatus @default(ACTIVE)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model ChatHistory {
+  id        String   @id @default(uuid()) @map("_id") @db.Uuid
+  userId    String
+  prompt    String
+  answer    String
+  chatId    String?
+  createdAt DateTime @default(now())
+}
+
+

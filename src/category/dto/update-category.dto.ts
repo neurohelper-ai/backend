@@ -15,6 +15,4 @@ export class UpdateCategoryDto {
   @IsOptional()
   @IsArray()
   scenarios: string[];
-
-
 }

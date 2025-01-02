@@ -1,65 +1,95 @@
 import { Injectable } from '@nestjs/common';
 import { ScenarioService } from 'src/scenario/scenario.service';
+import { ConfigService } from '@nestjs/config';
 
 import OpenAI from 'openai';
 import { UserService } from 'src/user/user.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 
-const client = new OpenAI({
-    apiKey: process.env['OPENAI_API_KEY'],
-});
-
-
-const modelsList = [
-    'chatgpt-4o-latest',
-    'gpt-4o-mini'
-]
+const modelsList = ['chatgpt-4o-latest', 'gpt-4o-mini'];
 
 const modelsPrices = [
-    
-    {
-        name: 'chatgpt-4o-latest',
-        inPrice: 5,
-        outPrice: 15
-    },
-    {
-        name: 'gpt-4o-mini',
-        inPrice: 0.150,
-        outPrice: 0.075 
-    }
-
-]
+  {
+    name: 'chatgpt-4o-latest',
+    inPrice: 5,
+    outPrice: 15,
+  },
+  {
+    name: 'gpt-4o-mini',
+    inPrice: 0.15,
+    outPrice: 0.075,
+  },
+];
 
 @Injectable()
 export class AiService {
-    constructor(private scenarioService: ScenarioService, private userService: UserService) {}
-    
-    async execute(userId: string, scenarioId: string, model: string, params: {placeholder: string, value: string}[]) {
-        const scenario = await this.scenarioService.findOne(scenarioId);
+  constructor(
+    private scenarioService: ScenarioService,
+    private userService: UserService,
+    private configService: ConfigService,
+    private prisma: PrismaService,
+  ) {}
 
-        let { prompt } = scenario;
-        if (params && params.length) {
-            params.forEach(({placeholder, value}) => {
-                prompt = prompt.replace(new RegExp(placeholder, 'g'), value);
-            });
-        }
+  async execute(
+    scenarioId: string,
+    model: string,
+    params: { placeholder: string; value: string }[],
+    userId: string,
+    chatId?: string,
+  ) {
+    const scenario = await this.scenarioService.findOne(scenarioId);
+    const client = new OpenAI({
+      apiKey: this.configService.get<string>('OPENAI_API_KEY'),
+    });
 
-        if (!modelsList.includes(model)) {
-            throw new Error('Invalid model');
-        }
-       
-        const chatCompletion = await client.chat.completions.create({
-            messages: [{ role: 'user', content: prompt }],
-            model,
-        });
-        const modelPrice = modelsPrices.find(m => m.name === model);
-
-        const tokenUsed = Math.ceil(
-            (chatCompletion.usage?.completion_tokens * modelPrice.outPrice +
-            chatCompletion.usage?.prompt_tokens * modelPrice.inPrice) *
-            100,
-        );
-
-        this.userService.withdraw(userId, tokenUsed);
-
+    let { prompt } = scenario;
+    if (params && params.length) {
+      params.forEach(({ placeholder, value }) => {
+        prompt = prompt.replace(placeholder, value);
+      });
     }
+
+    if (!model) {
+      model = 'gpt-4o-mini';
+    }
+    if (!modelsList.includes(model)) {
+      throw new Error('Invalid model');
+    }
+
+    const chatCompletion = await client.chat.completions.create({
+      messages: [{ role: 'user', content: prompt }],
+      model,
+    });
+    const modelPrice = modelsPrices.find((m) => m.name === model);
+
+    const tokenUsed = Math.ceil(
+      (chatCompletion.usage?.completion_tokens * modelPrice.outPrice +
+        chatCompletion.usage?.prompt_tokens * modelPrice.inPrice) *
+        100,
+    );
+    console.log('tokenUsed', tokenUsed);
+
+    const answer = chatCompletion.choices[0].message.content;
+    await this.addToHistory(userId, prompt, answer, chatId);
+
+    return { answer, tokenUsed };
+  }
+
+  async addToHistory(userId: string, prompt: string, answer: string, chatId?: string) {
+    await this.prisma.chatHistory.create({
+      data: {
+        userId,
+        prompt,
+        answer,
+        chatId,
+      },
+    });
+  }
+
+  async getChatHistory(userId: string, chatId?: string) {
+    return this.prisma.chatHistory.findMany({
+      where: { userId, chatId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }
