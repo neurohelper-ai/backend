@@ -1,8 +1,19 @@
-import { Controller, Post, Body, Req, Get, Query } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Req,
+  Get,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ExecuteTextDto } from './dto/executeText.dto';
 import { AiService } from './ai.service';
 import { User } from '@prisma/client';
 import { UserService } from 'src/user/user.service';
+import { FirebaseAuthGuard } from 'src/auth/firebase-auth.guard';
+import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
+import { FirebaseUserInfo, UserUtils } from 'src/utils/user-utils';
 
 @Controller('ai')
 export class AiController {
@@ -12,9 +23,13 @@ export class AiController {
   ) {}
 
   @Post('execute_gpt')
+  @UseGuards(FirebaseAuthGuard)
   async execute_gpt(@Body() body: ExecuteTextDto, @Req() req) {
-    const user: User = req.user;
-    if (user.tokens < 1) {
+    const user: DecodedIdToken = req.user;
+    const userUtils: UserUtils = req.userUtils;
+    const leftTokens: FirebaseUserInfo = userUtils.getUserInfo();
+
+    if (leftTokens.tokens < 1) {
       return {
         success: false,
         message: 'Not enough tokens',
@@ -24,10 +39,10 @@ export class AiController {
       body.id,
       body.model,
       body.params,
-      user.id,
+      user.uid,
       body.chatId,
     );
-    await this.userService.withdraw(user.id, response.tokenUsed);
+    await userUtils.removeTokens(response.tokenUsed);
     return {
       success: true,
       response,

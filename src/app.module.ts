@@ -6,7 +6,6 @@ import { ScenarioModule } from './scenario/scenario.module';
 import { AiModule } from './ai/ai.module';
 import { UserService } from './user/user.service';
 import { UserModule } from './user/user.module';
-import { FirebaseAuthModule } from './firebase-auth/firebase-auth.module';
 import { JwtDecodeMiddleware } from './utils/jwt-decode.middleware';
 import { ConfigModule } from '@nestjs/config';
 
@@ -21,7 +20,6 @@ import { ConfigModule } from '@nestjs/config';
     ScenarioModule,
     AiModule,
     UserModule,
-    FirebaseAuthModule,
   ],
   controllers: [],
   providers: [UserService],
