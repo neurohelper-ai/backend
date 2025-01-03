@@ -4,6 +4,7 @@ import { AiService } from './ai.service';
 import { User } from '@prisma/client';
 import { UserService } from 'src/user/user.service';
 
+
 @Controller('ai')
 export class AiController {
   constructor(
