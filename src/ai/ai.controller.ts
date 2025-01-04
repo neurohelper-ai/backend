@@ -29,7 +29,7 @@ export class AiController {
     const userUtils: UserUtils = req.userUtils;
     const leftTokens: FirebaseUserInfo = userUtils.getUserInfo();
 
-    if (leftTokens.tokens < 1) {
+    if (leftTokens.subscription.creditsLeft < 1) {
       return {
         success: false,
         message: 'Not enough tokens',

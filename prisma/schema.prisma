@@ -43,39 +43,6 @@ model GptRequest {
   updatedAt  DateTime      @updatedAt
 }
 
-model User {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  email     String    @unique
-  tokens    Int       @default(0)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-}
-
-model Plan {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  price     Float
-  duration  Int
-  tokens    Int
-  features  String[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-}
-
-enum SubscriptionStatus {
-  ACTIVE
-  INACTIVE
-}
-
-model Subscription {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String
-  planId    String
-  status    SubscriptionStatus @default(ACTIVE)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-}
-
 model ChatHistory {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String
@@ -84,5 +51,3 @@ model ChatHistory {
   chatId    String?
   createdAt DateTime @default(now())
 }
-
-
