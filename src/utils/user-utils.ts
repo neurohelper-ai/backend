@@ -18,6 +18,7 @@ export type Plan = {
   name: string;
   updatedAt: FirebaseFirestore.Timestamp;
   usdPrice: number;
+  type: string;
 };
 
 export type FirebaseUserInfo = {
@@ -90,5 +91,27 @@ export class UserUtils {
       creditsLeft: admin.firestore.FieldValue.increment(-amount),
     });
     this.userInfo.subscription.creditsLeft -= amount;
+  }
+
+  async updateSubscription(planId: string, credits: number) {
+    const subscriptionRef = admin
+      .firestore()
+      .collection('subscriptions')
+      .doc(this.userInfo.subscriptionId);
+
+    const updatedAt = admin.firestore.FieldValue.serverTimestamp();
+    const creditsResetOn = admin.firestore.Timestamp.now();
+
+    await subscriptionRef.update({
+      planId,
+      creditsLeft: credits,
+      creditsResetOn,
+      updatedAt,
+    });
+
+    this.userInfo.subscription.planId = planId;
+    this.userInfo.subscription.creditsLeft = credits;
+    this.userInfo.subscription.creditsResetOn = creditsResetOn;
+    this.userInfo.subscription.updatedAt = updatedAt as any;
   }
 }
