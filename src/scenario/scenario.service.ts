@@ -62,11 +62,15 @@ export class ScenarioService {
     return scenario;
   }
 
-  async findAll(categoryId: string) {
+  // для работы со сценариями
+  async findAll(categoryId?: string) {
+
+    if (!categoryId) {
+      return this.prisma.scenario.findMany();
+    }
+
     return this.prisma.scenario.findMany({
-      where: {
-        categoryId,
-      },
+      where: { categoryId },
     });
   }
 
