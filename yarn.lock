@@ -5566,6 +5566,11 @@ through@^2.3.6:
   resolved "https://registry.npmjs.org/through/-/through-2.3.8.tgz"
   integrity sha512-w89qg7PI8wAdvX60bMDP+bFoD5Dvhm9oLheFp5O4a2QF0cSBGsBX4qZmadPMvVqlLJBBci+WqGGOAPvcDeNSVg==
 
+tiktoken@^1.0.18:
+  version "1.0.18"
+  resolved "https://registry.npmjs.org/tiktoken/-/tiktoken-1.0.18.tgz"
+  integrity sha512-DXJesdYwmBHtkmz1sji+UMZ4AOEE8F7Uw/PS/uy0XfkKOzZC4vXkYXHMYyDT+grdflvF4bggtPt9cYaqOMslBw==
+
 tmp@^0.0.33:
   version "0.0.33"
   resolved "https://registry.npmjs.org/tmp/-/tmp-0.0.33.tgz"

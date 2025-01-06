@@ -9,18 +9,13 @@ import {
 } from '@nestjs/common';
 import { ExecuteTextDto } from './dto/executeText.dto';
 import { AiService } from './ai.service';
-import { User } from '@prisma/client';
-import { UserService } from 'src/user/user.service';
 import { FirebaseAuthGuard } from 'src/auth/firebase-auth.guard';
 import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
 import { FirebaseUserInfo, UserUtils } from 'src/utils/user-utils';
 
 @Controller('ai')
 export class AiController {
-  constructor(
-    private readonly aiService: AiService,
-    private readonly userService: UserService,
-  ) {}
+  constructor(private readonly aiService: AiService) {}
 
   @Post('execute_gpt')
   @UseGuards(FirebaseAuthGuard)
@@ -51,8 +46,7 @@ export class AiController {
 
   @Get('get_chat_history')
   async get_chat_history(@Req() req, @Query('chatId') chatId: string) {
-    const user: User = req.user;
-    const chatHistory = await this.aiService.getChatHistory(user.id, chatId);
+    const chatHistory = await this.aiService.getChatHistory('', chatId);
     return {
       success: true,
       chatHistory,
