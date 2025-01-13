@@ -1,10 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-
-type AcceptedModel = 'chatgpt-4o-latest' | 'gpt-4o-mini';
+import { AcceptedModel, ChatType } from '../creative-chat-hub.service';
 
 export class SendMessageDto {
-  @ApiProperty({ description: 'The message to be sent' })
-  message: string;
+  @ApiProperty({ description: 'The content to be sent' })
+  content: any[];
 
   @ApiProperty({
     description: 'The model to be used',
@@ -14,4 +13,11 @@ export class SendMessageDto {
 
   @ApiProperty({ description: 'The chat ID', required: false })
   chatId?: string;
+
+  @ApiProperty({
+    description: 'The type of chat',
+    enum: ['quick', 'context'],
+    required: false,
+  })
+  chatType?: ChatType;
 }

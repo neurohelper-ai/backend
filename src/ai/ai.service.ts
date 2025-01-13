@@ -79,21 +79,23 @@ export class AiService {
     answer: string,
     chatId?: string,
   ) {
-    await this.prisma.chatHistory.create({
-      data: {
-        userId,
-        prompt,
-        answer,
-        chatId,
-        model: 'chatgpt-4o-latest',
-      },
-    });
+    return []
+    // await this.prisma.chatHistory.create({
+    //   data: {
+    //     userId,
+    //     prompt,
+    //     answer,
+    //     chatId,
+    //     model: 'chatgpt-4o-latest',
+    //   },
+    // });
   }
 
   async getChatHistory(userId: string, chatId?: string) {
-    return this.prisma.chatHistory.findMany({
-      where: { userId, chatId },
-      orderBy: { createdAt: 'desc' },
-    });
+    return []
+    // return this.prisma.chatHistory.findMany({
+    //   where: { userId, chatId },
+    //   orderBy: { createdAt: 'desc' },
+    // });
   }
 }

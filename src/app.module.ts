@@ -7,6 +7,8 @@ import { AiModule } from './ai/ai.module';
 import { ConfigModule } from '@nestjs/config';
 import { PlansModule } from './plans/plans.module';
 import { CreativeChatHubModule } from './creative-chat-hub/creative-chat-hub.module';
+import { APP_FILTER } from '@nestjs/core';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 @Module({
   imports: [
@@ -22,7 +24,12 @@ import { CreativeChatHubModule } from './creative-chat-hub/creative-chat-hub.mod
     CreativeChatHubModule,
   ],
   controllers: [],
-  providers: [],
+  // providers: [
+  //   {
+  //     provide: APP_FILTER,
+  //     useClass: AllExceptionsFilter,
+  //   },
+  // ],
 })
 export class AppModule implements NestModule {
   configure() {}

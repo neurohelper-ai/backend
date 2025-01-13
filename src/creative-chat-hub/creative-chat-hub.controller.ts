@@ -10,7 +10,7 @@ import {
   Param,
   Put,
 } from '@nestjs/common';
-import { CreativeChatHubService } from './creative-chat-hub.service';
+import { CreativeChatHubService, SUPPORTED_MODELS } from './creative-chat-hub.service';
 import { FirebaseAuthGuard } from 'src/auth/firebase-auth.guard';
 import { SendMessageDto } from './dto/send-message.dto';
 import { UserUtils } from 'src/utils/user-utils';
@@ -24,11 +24,20 @@ export class CreativeChatHubController {
     private readonly creativeChatHubService: CreativeChatHubService,
   ) {}
 
+  @Get('/supported-models')
+  @ApiOperation({ summary: 'Get supported models' })
+  async getSupportedModels() {
+    return { ok: true, data: SUPPORTED_MODELS };
+  }
+
   @UseGuards(FirebaseAuthGuard)
   @Post('/send')
   @ApiOperation({ summary: 'Send a message' })
   @ApiBody({ type: SendMessageDto })
-  async sendMessage(@Req() req, @Body() dto: SendMessageDto) {
+  async sendMessage(
+    @Req() req,
+    @Body() dto: SendMessageDto,
+  ) {
     const userId = req.user.uid;
     const userUtils: UserUtils = req.userUtils;
     return this.creativeChatHubService.sendMessage(userId, dto, userUtils);
@@ -82,5 +91,13 @@ export class CreativeChatHubController {
       title,
       summary,
     );
+  }
+
+  @UseGuards(FirebaseAuthGuard)
+  @Put('/chat/:chatId/convert')
+  @ApiOperation({ summary: 'Convert chat type from quick to context' })
+  async convertChatType(@Req() req, @Param('chatId') chatId: string) {
+    const userId = req.user.uid;
+    return this.creativeChatHubService.convertChatType(chatId, userId);
   }
 }

@@ -49,16 +49,18 @@ model UserChat {
   userId    String
   title     String
   summary   String
+  chatType  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model ChatHistory {
+
+model UserChatMessage {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String
   chatId    String
-  prompt    String
-  answer    String
+  role     String
+  content  Json
   model     String
   createdAt DateTime @default(now())
 }

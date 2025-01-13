@@ -1,135 +1,124 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { SendMessageDto } from './dto/send-message.dto';
+// import { File as MulterFile } from 'multer';
+// import { PrismaService } from 'src/prisma/prisma.service';
+// import { SendMessageDto } from './dto/send-message.dto';
 import { v4 as uuidv4 } from 'uuid';
-import OpenAI from 'openai';
+// import OpenAI from 'openai';
 import { encoding_for_model } from 'tiktoken';
 import { FirebaseUserInfo, UserUtils } from 'src/utils/user-utils';
+import OpenAI from 'openai';
+import { SendMessageDto } from './dto/send-message.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
 
-type AcceptedModel = 'chatgpt-4o-latest' | 'gpt-4o-mini';
+export type AcceptedModel =
+  | 'chatgpt-4o-latest'
+  | 'gpt-4o-mini'
+  | 'chatgpt-o1'
+  | 'chatgpt-o1-mini'
+  | 'dall-e-3';
+export type ChatType = 'quick' | 'context';
+
+export const SUPPORTED_MODELS = [
+  {
+    title: 'Science, Code & Complex texts',
+    model: 'o1-preview',
+  },
+  {
+    title: 'Science, Code & Complex texts (mini)',
+    model: 'o1-mini',
+  },
+  {
+    title: 'Regular',
+    model: 'gpt-4o-mini',
+  },
+  {
+    title: 'Performance',
+    model: 'chatgpt-4o-latest',
+  },
+  {
+    title: 'Image generator',
+    model: 'dall-e-3',
+  },
+];
 
 @Injectable()
 export class CreativeChatHubService {
-  constructor(private prisma: PrismaService) {}
+  client: OpenAI;
 
-  async sendMessage(userId: string, dto: SendMessageDto, userUtils: UserUtils) {
-    const { message, model, chatId } = dto;
-    const chatUuid = chatId || uuidv4();
-
-    // Get user credits from the request
-    const leftTokens: FirebaseUserInfo = userUtils.getUserInfo();
-    const userCredits = leftTokens.subscription.creditsLeft;
-
-    // Calculate token usage via tiktoken
-    const tokenUsage = this.calculateTokenUsage(message, model);
-
-    if (userCredits < tokenUsage) {
-      return { ok: false, details: 'Not enough tokens' };
-    }
-
-    // Get response from ChatGPT
-    const response = await this.getChatGPTResponse(message, model, chatUuid);
-
-    // Save message to DB
-    await this.prisma.chatHistory.create({
-      data: {
-        userId,
-        chatId: chatUuid,
-        prompt: message,
-        answer: response,
-        model, // Add model field here
-        createdAt: new Date(),
-      },
+  constructor(private prisma: PrismaService) {
+    this.client = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
     });
-
-    // Handle UserChat creation or update
-    await this.handleUserChat(userId, chatUuid, message);
-
-    return { ok: true, response, chatUuid };
   }
 
-  async handleUserChat(userId: string, chatId: string, message: string) {
-    const existingChat = await this.prisma.userChat.findUnique({
+  async convertChatType(chatId: string, userId: string) {
+    const chatObj = await this.prisma.userChat.findUnique({
       where: { chatId },
     });
 
-    if (!existingChat) {
-      const title = await this.generateTitle(message);
-      const summary = await this.generateSummary(message);
-
-      await this.prisma.userChat.create({
-        data: {
-          chatId,
-          userId,
-          title,
-          summary,
-          createdAt: new Date(),
-        },
+    if (chatObj!.chatType === 'quick') {
+      await this.prisma.userChat.update({
+        where: { chatId },
+        data: { chatType: 'context' },
       });
+      return { ok: true, details: 'Chat converted to context mode' };
+    } else return { ok: false, details: 'Chat is already in context mode' };
+  }
+
+  async getChatMessages(chatId: string, userId: string) {
+    const chatObj = await this.prisma.userChat.findUnique({
+      where: { chatId },
+    });
+
+    if (chatObj!.userId !== userId) {
+      return { ok: false, details: 'Unauthorized' };
     }
+
+    const messages = await this.prisma.userChatMessage.findMany({
+      where: { chatId },
+    });
+
+    return { ok: true, details: messages };
   }
 
-  async generateTitle(message: string): Promise<string> {
-    const client = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+  async removeMessage(messageId: string, userId: string) {
+    const message = await this.prisma.userChatMessage.findUnique({
+      where: { id: messageId },
     });
 
-    const response = await client.chat.completions.create({
-      messages: [
-        {
-          role: 'user',
-          content: `Generate a title for the following message (very short): ${message}`,
-        },
-      ],
-      model: 'gpt-4o-mini',
+    if (message!.userId !== userId) {
+      return { ok: false, details: 'Unauthorized' };
+    }
+
+    await this.prisma.userChatMessage.delete({
+      where: { id: messageId },
     });
 
-    return response.choices[0].message.content.trim();
-  }
-
-  async generateSummary(message: string): Promise<string> {
-    const client = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-
-    const response = await client.chat.completions.create({
-      messages: [
-        {
-          role: 'user',
-          content: `Generate a summary for the following message (very short): ${message}`,
-        },
-      ],
-      model: 'gpt-4o-mini',
-    });
-
-    return response.choices[0].message.content.trim();
+    return { ok: true, details: 'Message deleted' };
   }
 
   async getUserChats(userId: string) {
-    return this.prisma.userChat.findMany({
+    const chats = await this.prisma.userChat.findMany({
       where: { userId },
-      orderBy: { createdAt: 'asc' },
     });
+
+    return { ok: true, details: chats };
   }
 
   async deleteChat(chatId: string, userId: string) {
-    const chat = await this.prisma.userChat.findUnique({
+    const chatObj = await this.prisma.userChat.findUnique({
       where: { chatId },
     });
 
-    if (!chat || chat.userId !== userId) {
-      throw new Error('Unauthorized access or chat not found');
+    if (chatObj!.userId !== userId) {
+      return { ok: false, details: 'Unauthorized' };
     }
-
-    await this.prisma.chatHistory.deleteMany({
-      where: { chatId },
-    });
 
     await this.prisma.userChat.delete({
       where: { chatId },
     });
 
-    return { ok: true, message: 'Chat and messages deleted successfully' };
+    return { ok: true, details: 'Chat deleted' };
   }
 
   async updateChat(
@@ -137,90 +126,158 @@ export class CreativeChatHubService {
     userId: string,
     title: string,
     summary: string,
-  ) {
-    const chat = await this.prisma.userChat.findUnique({
-      where: { chatId },
+  ) {}
+
+  async sendMessage(userId: string, dto: SendMessageDto, userUtils: UserUtils) {
+    const { content, model, chatId, chatType } = dto;
+    const message = this.extractMessage(content);
+    const chatUuid = chatId || uuidv4();
+
+    await this.ensureChatObj(chatUuid, userId, message, chatType);
+    await this.prisma.userChatMessage.create({
+      data: {
+        chatId: chatUuid,
+        userId,
+        role: 'user',
+        content: content,
+        model,
+      },
+    });
+    var newMsg: any;
+
+    if (dto.model == 'dall-e-3')
+      newMsg = await this.generateDallE3Image(chatUuid, userId, message);
+    else newMsg = await this.processMsg(chatUuid);
+
+    return { ok: true, details: newMsg };
+  }
+
+  async generateDallE3Image(chatId: string, userId: string, message: string) {
+    const image = await this.client.images.generate({
+      model: 'dall-e-3',
+      prompt: message,
     });
 
-    if (!chat || chat.userId !== userId) {
-      throw new Error('Unauthorized access or chat not found');
+    console.log(image.data);
+
+    const newMsg = {
+      chatId: chatId,
+      userId: userId,
+      role: 'assistant',
+      content: [
+        {
+          type: 'text',
+          text: 'A DALL-E-3 generated image with prompt: ' + message,
+        },
+        ...image.data.map((item) => ({
+          type: 'image_url',
+          image_url: item as any,
+        })),
+      ],
+      model: 'dall-e-3',
+      createdAt: new Date(),
+    };
+
+    await this.prisma.userChatMessage.create({
+      data: newMsg,
+    });
+
+    return newMsg;
+  }
+
+  extractMessage(content: any[]) {
+    if (content.length === 1) {
+      return content[0].text;
     }
-
-    await this.prisma.userChat.update({
-      where: { chatId },
-      data: { title, summary },
-    });
-
-    return { ok: true, message: 'Chat updated successfully' };
   }
 
-  async getChatMessages(chatId: string, userId: string) {
-    const chatMessages = await this.prisma.chatHistory.findMany({
-      where: { chatId, userId },
-      orderBy: { createdAt: 'asc' },
+  async processMsg(chatUuid: string) {
+    let history = await this.prisma.userChatMessage.findMany({
+      where: { chatId: chatUuid },
+    });
+    const chatInfo = await this.prisma.userChat.findUnique({
+      where: { chatId: chatUuid },
     });
 
-    if (chatMessages.length === 0) {
-      throw new Error('Unauthorized access or no messages found');
-    }
+    const isO1Model=history[history.length - 1].model.includes('o1')
 
-    return chatMessages;
-  }
+    const response = await this.client.chat.completions.create({
+      messages: (chatInfo!.chatType === 'context'
+        ? history
+        : [history[history.length - 1]]
+      ).map((item) => ({
+        //if there's type=image_url, then role=user
+        role: ((item.content as any[]).some((c) => c.type === 'image_url') && !isO1Model)
+          ? 'user'
+          : item.role,
+        content: isO1Model
+          ? (item.content as any[]).filter((c) => c.type !== 'image_url')
+          : item.content,
+      })) as any,
+      model: history[history.length - 1].model,
+    });
+    const newContent = response.choices[0].message;
+    const newMsg = {
+      chatId: chatUuid,
+      userId: chatInfo!.userId,
+      role: newContent.role,
+      content: [
+        {
+          type: 'text',
+          text: newContent.content,
+        },
+      ],
+      model: history[history.length - 1].model,
+      createdAt: new Date(),
+    };
 
-  async removeMessage(messageId: string, userId: string) {
-    const message = await this.prisma.chatHistory.findUnique({
-      where: { id: messageId },
+    await this.prisma.userChatMessage.create({
+      data: newMsg,
     });
 
-    if (!message || message.userId !== userId) {
-      throw new Error('Unauthorized access or message not found');
-    }
+    console.log(JSON.stringify(response, null, 2));
 
-    await this.prisma.chatHistory.delete({
-      where: { id: messageId },
+    return newMsg;
+  }
+
+  async simpleChatGPTCall(message: string) {
+    const response = await this.client.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: message,
+        },
+      ],
+      model: 'gpt-4o-mini',
     });
 
-    return { ok: true, message: 'Message deleted successfully' };
+    return response.choices[0].message.content.trim();
   }
 
-  calculateTokenUsage(message: string, model: AcceptedModel): number {
-    const encoding = encoding_for_model(model);
-    const tokens = encoding.encode(message);
-    return tokens.length;
-  }
-
-  async getChatGPTResponse(
+  async ensureChatObj(
+    chatId: string,
+    userId: string,
     message: string,
-    model: AcceptedModel,
-    chatId?: string,
-  ): Promise<string> {
-    const client = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+    chatType: ChatType,
+  ) {
+    const chatObj = await this.prisma.userChat.findUnique({
+      where: { chatId },
     });
 
-    let messages = [{ role: 'user', content: message }];
-
-    if (model === 'chatgpt-4o-latest' && chatId) {
-      const chatHistory = await this.prisma.chatHistory.findMany({
-        where: { chatId },
-        orderBy: { createdAt: 'asc' },
+    if (!chatObj) {
+      await this.prisma.userChat.create({
+        data: {
+          chatId,
+          userId,
+          title: await this.simpleChatGPTCall(
+            `Generate a title for the following message (very short): ${message}`,
+          ),
+          summary: await this.simpleChatGPTCall(
+            `Generate a summary for the following message (very short): ${message}`,
+          ),
+          chatType,
+        },
       });
-
-      messages = chatHistory.flatMap((entry) => [
-        { role: 'user', content: entry.prompt },
-        { role: 'assistant', content: entry.answer },
-      ]);
-
-      messages.push({ role: 'user', content: message });
-
-      console.log('Chat History:', messages); // Log the history for debugging purposes
     }
-
-    const chatCompletion = await client.chat.completions.create({
-      messages: messages as any,
-      model,
-    });
-
-    return chatCompletion.choices[0].message.content;
   }
 }
