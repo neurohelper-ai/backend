@@ -13,6 +13,7 @@ import { FirebaseAuthGuard } from 'src/auth/firebase-auth.guard';
 import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
 import { FirebaseUserInfo, UserUtils } from 'src/utils/user-utils';
 
+
 @Controller('ai')
 export class AiController {
   constructor(private readonly aiService: AiService) {}
