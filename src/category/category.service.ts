@@ -15,6 +15,8 @@ export class CategoryService {
         name: createCategoryDto.name,
         description: createCategoryDto.description,
         parentId: createCategoryDto.parentId,
+        key: createCategoryDto.key,
+        translations: createCategoryDto.translations,
       },
     });
   }
@@ -25,6 +27,7 @@ export class CategoryService {
       data: {
         name: createCategoryDto.name,
         parentId: createCategoryDto.parentId,
+        key: createCategoryDto.key,
         scenario: {
           connect: createCategoryDto.scenarios.map((id) => ({ id })),
         },
@@ -38,7 +41,7 @@ export class CategoryService {
         parentId: parentId,
       },
       include: {
-        scenario: !!parentId.length,
+        scenario: true,
       },
     });
   }

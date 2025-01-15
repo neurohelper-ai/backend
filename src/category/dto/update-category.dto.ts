@@ -1,4 +1,5 @@
-import { IsString, IsOptional, IsArray } from 'class-validator';
+import { InputJsonValue } from '@prisma/client/runtime/library';
+import { IsString, IsOptional, IsArray, IsJSON } from 'class-validator';
 
 export class UpdateCategoryDto {
   @IsString()
@@ -15,4 +16,12 @@ export class UpdateCategoryDto {
   @IsOptional()
   @IsArray()
   scenarios: string[];
+
+  @IsOptional()
+  @IsString()
+  key?: string;
+
+  @IsOptional()
+  @IsJSON()
+  translations?: InputJsonValue;
 }

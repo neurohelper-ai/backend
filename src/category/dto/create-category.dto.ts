@@ -1,4 +1,5 @@
-import { IsString, IsOptional } from 'class-validator';
+import { InputJsonValue } from '@prisma/client/runtime/library';
+import { IsString, IsOptional, isString, IsJSON } from 'class-validator';
 
 export class CreateCategoryDto {
   @IsString()
@@ -11,4 +12,12 @@ export class CreateCategoryDto {
   @IsOptional()
   @IsString()
   parentId?: string;
+
+  @IsOptional()
+  @IsString()
+  key?: string;
+
+  @IsOptional()
+  @IsJSON()
+  translations?: InputJsonValue;
 }

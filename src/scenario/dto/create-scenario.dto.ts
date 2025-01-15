@@ -1,3 +1,4 @@
+import { InputJsonValue } from '@prisma/client/runtime/library';
 import { IsString, IsOptional, IsJSON } from 'class-validator';
 
 export class CreateScenarioDto {
@@ -13,4 +14,13 @@ export class CreateScenarioDto {
   @IsOptional()
   @IsString()
   categoryId?: string;
+
+  @IsOptional()
+  @IsString()
+  key?: string;
+
+  @IsOptional()
+  @IsJSON()
+  translations?: InputJsonValue;
+
 }

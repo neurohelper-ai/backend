@@ -3,12 +3,27 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateScenarioDto } from './dto/create-scenario.dto';
 import { UpdateScenarioDto } from './dto/update-scenario.dto';
 import { Prisma } from '@prisma/client';
+import slugify from 'slugify';
+
 @Injectable()
 export class ScenarioService {
   constructor(private prisma: PrismaService) {}
 
+  private generateKey(name: string): string{
+    return slugify(name, {lower: true, replacement: '_'});
+  }
+
   async create(createScenarioDto: CreateScenarioDto) {
-    const { categoryId, ...data } = createScenarioDto;
+    const { categoryId, name, ...data } = createScenarioDto;
+
+    const key = this.generateKey(name);
+
+
+    const existingScenario = await this.prisma.scenario.findUnique({where: {key}});
+    if(existingScenario){
+      throw new Error(`Scenario with key '${key}' already exists. `)
+    }
+
 
     if (categoryId) {
       const category = await this.prisma.category.findUnique({
@@ -22,13 +37,29 @@ export class ScenarioService {
     return this.prisma.scenario.create({
       data: {
         ...data,
-        categoryId,
+        name,
+        key,
+        translations: JSON.parse(JSON.stringify(createScenarioDto.translations)),
+        ...(categoryId && { category: { connect: { id: categoryId } } }),
+        
       },
     });
   }
 
   async update(id: string, updateScenarioDto: UpdateScenarioDto) {
-    const { categoryId, ...data } = updateScenarioDto;
+    const { categoryId, name, ...data } = updateScenarioDto;
+
+    let updateData: Prisma.ScenarioUpdateInput = {...data};
+    
+    if(name){
+      updateData.name = name;
+      updateData.key = this.generateKey(name);
+
+      const existingScenario = await this.prisma.scenario.findUnique({where: {key: updateData.key as string}});
+      if (existingScenario && existingScenario.id !== id){
+        throw new Error(`Scenario with key '${updateData.key}' already exists.`);
+      }
+    }
 
     if (categoryId) {
       const category = await this.prisma.category.findUnique({
@@ -37,15 +68,13 @@ export class ScenarioService {
       if (!category) {
         throw new NotFoundException(`Category with ID ${categoryId} not found`);
       }
+      updateData.category = {connect: {id: categoryId}};
     }
 
     try {
       return this.prisma.scenario.update({
         where: { id },
-        data: {
-          ...data,
-          categoryId,
-        },
+        data: updateData,
       });
     } catch (error) {
       throw new NotFoundException(`Scenario with ID ${id} not found`);
