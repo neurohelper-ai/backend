@@ -15,6 +15,7 @@ import { FirebaseAuthGuard } from 'src/auth/firebase-auth.guard';
 import { SendMessageDto } from './dto/send-message.dto';
 import { UserUtils } from 'src/utils/user-utils';
 import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { EditChatDto } from './dto/edit-chat.dto';
 
 @ApiTags('creative-chat-hub')
 @ApiBearerAuth('access-token')
@@ -78,18 +79,18 @@ export class CreativeChatHubController {
   @UseGuards(FirebaseAuthGuard)
   @Put('/chat/:chatId')
   @ApiOperation({ summary: 'Update chat title and summary' })
+  @ApiBody({ type: EditChatDto })
   async updateChat(
     @Req() req,
     @Param('chatId') chatId: string,
-    @Body('title') title: string,
-    @Body('summary') summary: string,
+    @Body() dto: EditChatDto,
   ) {
     const userId = req.user.uid;
     return this.creativeChatHubService.updateChat(
       chatId,
       userId,
-      title,
-      summary,
+      dto.title,
+      dto.summary,
     );
   }
 

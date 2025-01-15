@@ -126,7 +126,22 @@ export class CreativeChatHubService {
     userId: string,
     title: string,
     summary: string,
-  ) {}
+  ) {
+    const chatObj = await this.prisma.userChat.findUnique({
+      where: { chatId },
+    });
+
+    if (chatObj!.userId !== userId) {
+      return { ok: false, details: 'Unauthorized' };
+    }
+
+    await this.prisma.userChat.update({
+      where: { chatId },
+      data: { title, summary },
+    });
+
+    return { ok: true, details: 'Chat updated successfully' };
+  }
 
   async sendMessage(userId: string, dto: SendMessageDto, userUtils: UserUtils) {
     const { content, model, chatId, chatType } = dto;
