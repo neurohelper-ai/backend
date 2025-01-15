@@ -32,7 +32,7 @@ jobs:
         ssh -o StrictHostKeyChecking=no root@138.68.68.7 << 'EOF'
           cd /root/backend
           git fetch --all
-          git reset --hard origin/main
+          git reset --hard origin/dev
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
           nvm install
