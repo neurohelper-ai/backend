@@ -1,0 +1,41 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: |
+          -----BEGIN OPENSSH PRIVATE KEY-----
+          b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+          QyNTUxOQAAACBoErF+hI0XaErkIh5GYR0bpff9JCmPninW2i6C0YxMBgAAAKjaEL5D2hC+
+          QwAAAAtzc2gtZWQyNTUxOQAAACBoErF+hI0XaErkIh5GYR0bpff9JCmPninW2i6C0YxMBg
+          AAAEArncjvs/DC6WtF7B4hk7A9drXXSpunZHdQjzQ42PqUNGgSsX6EjRdoSuQiHkZhHRul
+          9/0kKY+eKdbaLoLRjEwGAAAAH3Jvb3RAdWJ1bnR1LXMtMnZjcHUtNGdiLWZyYTEtMDEBAg
+          MEBQY=
+          -----END OPENSSH PRIVATE KEY-----
+
+    - name: Deploy to server
+      run: |
+        ssh -o StrictHostKeyChecking=no root@138.68.68.7 << 'EOF'
+          cd /root/backend
+          git fetch --all
+          git reset --hard origin/main
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          nvm install
+          nvm use
+          npm install
+          npm run deploy
+        EOF
