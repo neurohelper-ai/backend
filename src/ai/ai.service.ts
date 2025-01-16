@@ -3,7 +3,6 @@ import { ScenarioService } from 'src/scenario/scenario.service';
 import { ConfigService } from '@nestjs/config';
 
 import OpenAI from 'openai';
-import { UserService } from 'src/user/user.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 const modelsList = ['chatgpt-4o-latest', 'gpt-4o-mini'];
@@ -25,7 +24,6 @@ const modelsPrices = [
 export class AiService {
   constructor(
     private scenarioService: ScenarioService,
-    private userService: UserService,
     private configService: ConfigService,
     private prisma: PrismaService,
   ) {}
@@ -75,21 +73,29 @@ export class AiService {
     return { answer, tokenUsed };
   }
 
-  async addToHistory(userId: string, prompt: string, answer: string, chatId?: string) {
-    await this.prisma.chatHistory.create({
-      data: {
-        userId,
-        prompt,
-        answer,
-        chatId,
-      },
-    });
+  async addToHistory(
+    userId: string,
+    prompt: string,
+    answer: string,
+    chatId?: string,
+  ) {
+    return []
+    // await this.prisma.chatHistory.create({
+    //   data: {
+    //     userId,
+    //     prompt,
+    //     answer,
+    //     chatId,
+    //     model: 'chatgpt-4o-latest',
+    //   },
+    // });
   }
 
   async getChatHistory(userId: string, chatId?: string) {
-    return this.prisma.chatHistory.findMany({
-      where: { userId, chatId },
-      orderBy: { createdAt: 'desc' },
-    });
+    return []
+    // return this.prisma.chatHistory.findMany({
+    //   where: { userId, chatId },
+    //   orderBy: { createdAt: 'desc' },
+    // });
   }
 }
