@@ -9,6 +9,9 @@ import { FirebaseUserInfo, UserUtils } from 'src/utils/user-utils';
 import OpenAI from 'openai';
 import { SendMessageDto } from './dto/send-message.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { SendVoiceDto } from './dto/send-voice.dto';
+import { PassThrough } from 'stream';
+import { buffer } from 'stream/consumers';
 
 export type AcceptedModel =
   | 'chatgpt-4o-latest'
@@ -167,6 +170,141 @@ export class CreativeChatHubService {
     return { ok: true, details: newMsg };
   }
 
+  async transcribeVoiceMessage(
+    userId: string,
+    dto: SendVoiceDto,
+    userUtils: UserUtils,
+  ) {
+    const { content, model, chatId, chatType } = dto;
+    const chatUuid = chatId || uuidv4();
+
+    const file = new File([content.buffer], content.originalname, {
+      type: content.mimetype,
+    });
+
+    // Transcribe the voice message using OpenAI Whisper model
+    const transcription = await this.client.audio.transcriptions.create({
+      model: 'whisper-1',
+      file: file,
+    });
+
+    const transcribedText = transcription.text;
+
+    const textContent = [
+      {
+        type: 'text',
+        text: `Voice Message: ${transcribedText}`,
+      },
+    ];
+    await this.ensureChatObj(
+      chatUuid,
+      userId,
+      transcribedText,
+      chatType as ChatType,
+    );
+    const transcribedMsg = {
+      chatId: chatUuid,
+      userId,
+      role: 'user',
+      content: textContent,
+      model,
+      createdAt: new Date(),
+    };
+    await this.prisma.userChatMessage.create({
+      data: transcribedMsg,
+    });
+
+    return { ok: true, details: transcribedMsg };
+  }
+
+  async executeChat(chatId: string, userId: string) {
+    let history = await this.prisma.userChatMessage.findMany({
+      where: { chatId },
+    });
+    const chatInfo = await this.prisma.userChat.findUnique({
+      where: { chatId },
+    });
+
+    if (chatInfo!.userId !== userId) {
+      return { ok: false, details: 'Unauthorized' };
+    }
+
+    const response = await this.client.chat.completions.create({
+      messages: (chatInfo!.chatType === 'context'
+        ? history
+        : [history[history.length - 1]]
+      ).map((item) => ({
+        role: item.role,
+        content: item.content,
+      })) as any,
+      model: history[history.length - 1].model,
+    });
+
+    const newContent = response.choices[0].message;
+    const newMsg = {
+      chatId,
+      userId: chatInfo!.userId,
+      role: newContent.role,
+      content: [
+        {
+          type: 'text',
+          text: newContent.content,
+        },
+      ],
+      model: history[history.length - 1].model,
+      createdAt: new Date(),
+    };
+
+    await this.prisma.userChatMessage.create({
+      data: newMsg,
+    });
+
+    return { ok: true, details: newMsg };
+  }
+
+  async processVoiceMsg(chatUuid: string) {
+    let history = await this.prisma.userChatMessage.findMany({
+      where: { chatId: chatUuid },
+    });
+    const chatInfo = await this.prisma.userChat.findUnique({
+      where: { chatId: chatUuid },
+    });
+
+    const response = await this.client.chat.completions.create({
+      messages: (chatInfo!.chatType === 'context'
+        ? history
+        : [history[history.length - 1]]
+      ).map((item) => ({
+        role: item.role,
+        content: item.content,
+      })) as any,
+      model: history[history.length - 1].model,
+    });
+
+    const newContent = response.choices[0].message;
+    const newMsg = {
+      chatId: chatUuid,
+      userId: chatInfo!.userId,
+      role: newContent.role,
+      content: [
+        {
+          type: 'text',
+          text: newContent.content,
+        },
+      ],
+      model: history[history.length - 1].model,
+      createdAt: new Date(),
+    };
+
+    await this.prisma.userChatMessage.create({
+      data: newMsg,
+    });
+
+    console.log(JSON.stringify(response, null, 2));
+
+    return newMsg;
+  }
+
   async generateDallE3Image(chatId: string, userId: string, message: string) {
     const image = await this.client.images.generate({
       model: 'dall-e-3',
@@ -214,7 +352,7 @@ export class CreativeChatHubService {
       where: { chatId: chatUuid },
     });
 
-    const isO1Model=history[history.length - 1].model.includes('o1')
+    const isO1Model = history[history.length - 1].model.includes('o1');
 
     const response = await this.client.chat.completions.create({
       messages: (chatInfo!.chatType === 'context'
@@ -222,9 +360,11 @@ export class CreativeChatHubService {
         : [history[history.length - 1]]
       ).map((item) => ({
         //if there's type=image_url, then role=user
-        role: ((item.content as any[]).some((c) => c.type === 'image_url') && !isO1Model)
-          ? 'user'
-          : item.role,
+        role:
+          (item.content as any[]).some((c) => c.type === 'image_url') &&
+          !isO1Model
+            ? 'user'
+            : item.role,
         content: isO1Model
           ? (item.content as any[]).filter((c) => c.type !== 'image_url')
           : item.content,

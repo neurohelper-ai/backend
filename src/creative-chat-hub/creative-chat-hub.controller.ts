@@ -9,13 +9,26 @@ import {
   Delete,
   Param,
   Put,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
-import { CreativeChatHubService, SUPPORTED_MODELS } from './creative-chat-hub.service';
+import {
+  CreativeChatHubService,
+  SUPPORTED_MODELS,
+} from './creative-chat-hub.service';
 import { FirebaseAuthGuard } from 'src/auth/firebase-auth.guard';
 import { SendMessageDto } from './dto/send-message.dto';
 import { UserUtils } from 'src/utils/user-utils';
-import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBody,
+  ApiBearerAuth,
+  ApiConsumes,
+} from '@nestjs/swagger';
 import { EditChatDto } from './dto/edit-chat.dto';
+import { SendVoiceDto } from './dto/send-voice.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('creative-chat-hub')
 @ApiBearerAuth('access-token')
@@ -35,13 +48,39 @@ export class CreativeChatHubController {
   @Post('/send')
   @ApiOperation({ summary: 'Send a message' })
   @ApiBody({ type: SendMessageDto })
-  async sendMessage(
-    @Req() req,
-    @Body() dto: SendMessageDto,
-  ) {
+  async sendMessage(@Req() req, @Body() dto: SendMessageDto) {
     const userId = req.user.uid;
     const userUtils: UserUtils = req.userUtils;
     return this.creativeChatHubService.sendMessage(userId, dto, userUtils);
+  }
+
+  @UseGuards(FirebaseAuthGuard)
+  @Post('/transcribe')
+  @UseInterceptors(FileInterceptor('content'))
+  @ApiOperation({ summary: 'Transcribe a voice message' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: SendVoiceDto })
+  async transcribeVoiceMessage(
+    @Req() req,
+    @UploadedFile() content: Express.Multer.File,
+    @Body() dto: SendVoiceDto,
+  ) {
+    const userId = req.user.uid;
+    const userUtils: UserUtils = req.userUtils;
+    dto.content = content;
+    return this.creativeChatHubService.transcribeVoiceMessage(
+      userId,
+      dto,
+      userUtils,
+    );
+  }
+
+  @UseGuards(FirebaseAuthGuard)
+  @Post('/execute')
+  @ApiOperation({ summary: "Execute chat's last message" })
+  async executeChat(@Req() req, @Query('chatId') chatId: string) {
+    const userId = req.user.uid;
+    return this.creativeChatHubService.executeChat(chatId, userId);
   }
 
   @UseGuards(FirebaseAuthGuard)
