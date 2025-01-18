@@ -10,8 +10,11 @@ import OpenAI from 'openai';
 import { SendMessageDto } from './dto/send-message.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SendVoiceDto } from './dto/send-voice.dto';
-import { PassThrough } from 'stream';
-import { buffer } from 'stream/consumers';
+import {
+  calculateTotalCost,
+  CREDIT_RATE,
+  WHISPER_PRICING,
+} from 'src/utils/pricing';
 
 export type AcceptedModel =
   | 'chatgpt-4o-latest'
@@ -23,24 +26,52 @@ export type ChatType = 'quick' | 'context';
 
 export const SUPPORTED_MODELS = [
   {
-    title: 'Science, Code & Complex texts',
-    model: 'o1-preview',
-  },
-  {
-    title: 'Science, Code & Complex texts (mini)',
-    model: 'o1-mini',
-  },
-  {
-    title: 'Regular',
+    title: 'ChatGPT 4o (optimized)',
     model: 'gpt-4o-mini',
+    category: 'Popular Choice: Quality with Savings',
   },
   {
-    title: 'Performance',
-    model: 'chatgpt-4o-latest',
+    title: 'ChatGPT 4o (classic)',
+    model: 'gpt-4o',
+    category: 'Classic models',
   },
   {
-    title: 'Image generator',
+    title: 'ChatGPT o1',
+    model: 'o1',
+    category: 'Power for Professionals',
+  },
+  {
+    title: 'ChatGPT o1-mini',
+    model: 'o1-mini',
+    category: 'Power for Professionals',
+  },
+  {
+    title: 'Basic Image Generation',
     model: 'dall-e-3',
+    category: 'Basic Image Generation',
+  },
+  {
+    title: 'CATEGORIES',
+    'Popular Choice: Quality with Savings': {
+      models: ['gpt-4o-mini'],
+      description:
+        'Efficient and high-quality models that deliver great results at minimal cost. Perfect for everyday projects where budget is a priority. Choosing from this category can significantly reduce your expenses while maintaining good performance.',
+    },
+    'Classic models': {
+      models: ['chatgpt-4o-latest'],
+      description:
+        'A classic choice for a wide range of tasks with moderate pricing. However, costs can rise significantly when working with extended contexts, so consider your usage carefully.',
+    },
+    'Power for Professionals': {
+      models: ['chatgpt-o1', 'chatgpt-o1-mini'],
+      description:
+        'Advanced models tailored for specialized tasks in science, coding, and complex text processing. These models provide unmatched accuracy but come at a higher cost. Use this category only if you need precision for complex challenges; otherwise, costs may outweigh the benefits.',
+    },
+    'Basic Image Generation': {
+      models: ['dall-e-3'],
+      description:
+        'Ideal for basic image creation needs. For advanced capabilities, check out the "Image Master" module available in "PRO" and higher-tier plans. Selecting these models keeps costs manageable, but using them without clear goals may lead to suboptimal results.',
+    },
   },
 ];
 
@@ -165,7 +196,7 @@ export class CreativeChatHubService {
 
     if (dto.model == 'dall-e-3')
       newMsg = await this.generateDallE3Image(chatUuid, userId, message);
-    else newMsg = await this.processMsg(chatUuid);
+    else newMsg = await this.processMsg(chatUuid, userUtils);
 
     return { ok: true, details: newMsg };
   }
@@ -181,6 +212,12 @@ export class CreativeChatHubService {
     const file = new File([content.buffer], content.originalname, {
       type: content.mimetype,
     });
+
+    // Check the duration of the voice message
+    const duration = await this.getAudioDuration(content.buffer);
+    if (duration > 59) {
+      return { ok: false, details: 'Voice message exceeds 59 seconds limit' };
+    }
 
     // Transcribe the voice message using OpenAI Whisper model
     const transcription = await this.client.audio.transcriptions.create({
@@ -214,10 +251,16 @@ export class CreativeChatHubService {
       data: transcribedMsg,
     });
 
+    await userUtils.removeTokens(Math.ceil(CREDIT_RATE / WHISPER_PRICING));
+
     return { ok: true, details: transcribedMsg };
   }
 
-  async executeChat(chatId: string, userId: string) {
+  async getAudioDuration(file: Buffer): Promise<number> {
+    return 0;
+  }
+
+  async executeChat(chatId: string, userId: string, userUtils: UserUtils) {
     let history = await this.prisma.userChatMessage.findMany({
       where: { chatId },
     });
@@ -255,54 +298,20 @@ export class CreativeChatHubService {
       createdAt: new Date(),
     };
 
+    const tokensUsed = calculateTotalCost(
+      history[history.length - 1].model,
+      response.usage.prompt_tokens -
+        response.usage.prompt_tokens_details.cached_tokens,
+      response.usage.prompt_tokens_details.cached_tokens,
+      response.usage.completion_tokens,
+    );
+    await userUtils.removeTokens(Math.ceil(tokensUsed / CREDIT_RATE));
+
     await this.prisma.userChatMessage.create({
       data: newMsg,
     });
 
     return { ok: true, details: newMsg };
-  }
-
-  async processVoiceMsg(chatUuid: string) {
-    let history = await this.prisma.userChatMessage.findMany({
-      where: { chatId: chatUuid },
-    });
-    const chatInfo = await this.prisma.userChat.findUnique({
-      where: { chatId: chatUuid },
-    });
-
-    const response = await this.client.chat.completions.create({
-      messages: (chatInfo!.chatType === 'context'
-        ? history
-        : [history[history.length - 1]]
-      ).map((item) => ({
-        role: item.role,
-        content: item.content,
-      })) as any,
-      model: history[history.length - 1].model,
-    });
-
-    const newContent = response.choices[0].message;
-    const newMsg = {
-      chatId: chatUuid,
-      userId: chatInfo!.userId,
-      role: newContent.role,
-      content: [
-        {
-          type: 'text',
-          text: newContent.content,
-        },
-      ],
-      model: history[history.length - 1].model,
-      createdAt: new Date(),
-    };
-
-    await this.prisma.userChatMessage.create({
-      data: newMsg,
-    });
-
-    console.log(JSON.stringify(response, null, 2));
-
-    return newMsg;
   }
 
   async generateDallE3Image(chatId: string, userId: string, message: string) {
@@ -344,7 +353,7 @@ export class CreativeChatHubService {
     }
   }
 
-  async processMsg(chatUuid: string) {
+  async processMsg(chatUuid: string, userUtils: UserUtils) {
     let history = await this.prisma.userChatMessage.findMany({
       where: { chatId: chatUuid },
     });
@@ -390,7 +399,14 @@ export class CreativeChatHubService {
       data: newMsg,
     });
 
-    console.log(JSON.stringify(response, null, 2));
+    const tokensUsed = calculateTotalCost(
+      history[history.length - 1].model,
+      response.usage.prompt_tokens -
+        response.usage.prompt_tokens_details.cached_tokens,
+      response.usage.prompt_tokens_details.cached_tokens,
+      response.usage.completion_tokens,
+    );
+    await userUtils.removeTokens(Math.ceil(tokensUsed / CREDIT_RATE));
 
     return newMsg;
   }

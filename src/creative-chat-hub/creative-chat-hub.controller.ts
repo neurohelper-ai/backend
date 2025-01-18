@@ -80,7 +80,8 @@ export class CreativeChatHubController {
   @ApiOperation({ summary: "Execute chat's last message" })
   async executeChat(@Req() req, @Query('chatId') chatId: string) {
     const userId = req.user.uid;
-    return this.creativeChatHubService.executeChat(chatId, userId);
+    const userUtils: UserUtils = req.userUtils;
+    return this.creativeChatHubService.executeChat(chatId, userId, userUtils);
   }
 
   @UseGuards(FirebaseAuthGuard)
