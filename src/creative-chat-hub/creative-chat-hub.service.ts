@@ -85,6 +85,51 @@ export class CreativeChatHubService {
     });
   }
 
+  async getChatHistory(chatId: string) {
+    const chatInfo = await this.prisma.userChat.findUnique({
+      where: { chatId },
+    });
+
+    let history = await this.prisma.userChatMessage.findMany({
+      where: { chatId },
+    });
+
+    if (history.length <= 30) {
+      return history.map((msg) => ({
+        role: msg.role,
+        content: (msg.content as any).filter((c) => c.type === 'text'),
+      }));
+    }
+
+    const summary = chatInfo!.summary;
+    const oldestMessage = (history[30].content as any).find(item => item.type == 'text').text;
+
+    const updatedSummary = await this.simpleChatGPTCall(
+      `Summarize the following message: ${oldestMessage}${summary ? ` Previous summary: ${summary}` : ''}`
+    );
+
+    await this.prisma.userChat.update({
+      where: { chatId },
+      data: { summary: updatedSummary },
+    });
+
+    return [
+      {
+        role: 'system',
+        content: [
+          {
+            type: 'text',
+            text: `Previous Context: ${updatedSummary}`,
+          },
+        ],
+      },
+      ...history.slice(-30).map((msg) => ({
+        role: msg.role,
+        content: (msg.content as any).filter((c) => c.type === 'text'),
+      })),
+    ];
+  }
+
   async convertChatType(chatId: string, userId: string) {
     const chatObj = await this.prisma.userChat.findUnique({
       where: { chatId },
@@ -274,7 +319,7 @@ export class CreativeChatHubService {
 
     const response = await this.client.chat.completions.create({
       messages: (chatInfo!.chatType === 'context'
-        ? history
+        ? await this.getChatHistory(chatId)
         : [history[history.length - 1]]
       ).map((item) => ({
         role: item.role,
@@ -365,7 +410,7 @@ export class CreativeChatHubService {
 
     const response = await this.client.chat.completions.create({
       messages: (chatInfo!.chatType === 'context'
-        ? history
+        ? await this.getChatHistory(chatUuid)
         : [history[history.length - 1]]
       ).map((item) => ({
         //if there's type=image_url, then role=user
@@ -412,6 +457,7 @@ export class CreativeChatHubService {
   }
 
   async simpleChatGPTCall(message: string) {
+    console.log(`Simple call: ${message}`)
     const response = await this.client.chat.completions.create({
       messages: [
         {
