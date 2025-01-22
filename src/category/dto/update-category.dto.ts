@@ -22,6 +22,6 @@ export class UpdateCategoryDto {
   key?: string;
 
   @IsOptional()
-  @IsJSON()
-  translations?: InputJsonValue;
+  @IsString()
+  description?: string;
 }

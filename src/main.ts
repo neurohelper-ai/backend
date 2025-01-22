@@ -9,6 +9,16 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   app.enableCors();
 
+
+  const corsOptions: CorsOptions = {
+    origin: 'http://localhost:8081',
+    methods: 'GET,POST,PUT,DELETE',
+    allowedHeaders: 'Content-Type, Authorization',
+  };
+  
+  app.enableCors(corsOptions);
+
+
   const config = new DocumentBuilder()
     .setTitle('NeuroHelper API')
     .setDescription('The NeuroHelper backend (API)')

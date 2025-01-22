@@ -8,29 +8,30 @@ generator client {
 }
 
 model Category {
-  id          String     @id @default(auto()) @map("_id") @db.ObjectId
-  key         String?     @unique
-  translations  Json?
+  id          String     @id @default(uuid()) @map("_id") @db.String
+  key         String     @unique
+  locale      String
+  level       Int
   name        String
   description String?
+  imageName   String?
+  chatPrompt  String?
   coverUrl    String     @default("https://api-dev-minimal-v610.pages.dev/assets/images/cover/cover-2.webp")
   scenario    Scenario[]
   parentId    String     @default("")
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
-
 }
 
 model Scenario {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  key         String?     @unique
-  translations  Json?
+  key         String    @unique
   name        String
   prompt      String
   params      Json
   description String?
   category    Category? @relation(fields: [categoryId], references: [id])
-  categoryId  String?   @db.ObjectId
+  categoryId  String?   @db.String
 }
 
 enum RequestStatus {

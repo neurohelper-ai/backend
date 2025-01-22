@@ -3,7 +3,8 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateScenarioDto } from './dto/create-scenario.dto';
 import { UpdateScenarioDto } from './dto/update-scenario.dto';
 import { Prisma } from '@prisma/client';
-import slugify from 'slugify';
+const slugify = require('slugify');
+
 
 @Injectable()
 export class ScenarioService {
@@ -39,7 +40,6 @@ export class ScenarioService {
         ...data,
         name,
         key,
-        translations: JSON.parse(JSON.stringify(createScenarioDto.translations)),
         ...(categoryId && { category: { connect: { id: categoryId } } }),
         
       },

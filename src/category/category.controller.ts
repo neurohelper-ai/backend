@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Req } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -9,7 +9,6 @@ import { ScenarioService } from 'src/scenario/scenario.service';
 export class CategoryController {
   constructor(
     private readonly categoryService: CategoryService,
-    private readonly scenarioService: ScenarioService,
   ) {}
 
   @Post('/create')
@@ -24,21 +23,22 @@ export class CategoryController {
 
   @Get()
   async getCategoryByParent(@Req() req) {
-    let parentId = req.query.parentId;
-    if (!parentId) {
-      parentId = '';
-    }
-    let scenario = [];
+    let parentId = req.query.parentId || '';
+    
     const category = await this.categoryService.getCategoryByParent(parentId);
-    try {
-      scenario = parentId && (await this.scenarioService.findAll(parentId));
-    } catch (e) {
-      console.log(e);
-    }
-
+  
     return {
       category,
-      scenario,
     };
+  }
+
+@Get('top-categories')
+  async getTopCategories() {
+  return this.categoryService.getTopCategories();
+}
+
+@Get('subcategories/:parentId')
+  async getCategoriesByParentId(@Param('parentId') parentId: string) {
+    return await this.categoryService.getCategoriesByParentId(parentId);
   }
 }

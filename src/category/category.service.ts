@@ -9,14 +9,17 @@ import { equals } from 'class-validator';
 export class CategoryService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createCategoryDto: CreateCategoryDto) {
+  async create(category: CreateCategoryDto) {
     return await this.prisma.category.create({
       data: {
-        name: createCategoryDto.name,
-        description: createCategoryDto.description,
-        parentId: createCategoryDto.parentId,
-        key: createCategoryDto.key,
-        translations: createCategoryDto.translations,
+        key: category._id,
+        locale: category.locale,
+        level: category.level,
+        name: category.name,
+        description: category.description,
+        chatPrompt: category.chatPrompt,
+        imageName: category.imageName,
+        parentId: category.parentId,
       },
     });
   }
@@ -40,9 +43,26 @@ export class CategoryService {
       where: {
         parentId: parentId,
       },
-      include: {
-        scenario: true,
-      },
     });
   }
+
+  async getTopCategories() {
+    const categories = await this.prisma.category.findMany({
+      where: {
+        key:"en1.",
+      },
+    });
+
+  console.log('Top categories:', categories); 
+  return categories;
+  }
+
+
+  async getCategoriesByParentId(parentId: string) {
+    return await this.prisma.category.findMany({
+      where: { parentId }, 
+      orderBy: { name: 'asc' },
+    });
+  }
+  
 }

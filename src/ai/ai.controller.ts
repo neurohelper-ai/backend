@@ -10,7 +10,7 @@ import {
 import { ExecuteTextDto } from './dto/executeText.dto';
 import { AiService } from './ai.service';
 import { FirebaseAuthGuard } from 'src/auth/firebase-auth.guard';
-import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
+import { DecodedIdToken } from 'node_modules/firebase-admin/lib/auth/token-verifier';
 import { FirebaseUserInfo, UserUtils } from 'src/utils/user-utils';
 
 

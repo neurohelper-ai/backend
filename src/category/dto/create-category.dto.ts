@@ -1,7 +1,16 @@
 import { InputJsonValue } from '@prisma/client/runtime/library';
-import { IsString, IsOptional, isString, IsJSON } from 'class-validator';
+import { IsString, IsOptional, isString, IsJSON, IsInt } from 'class-validator';
 
 export class CreateCategoryDto {
+
+
+  @IsOptional()
+  @IsString()
+  _id?: string;
+
+  @IsString()
+  key: string;
+
   @IsString()
   name: string;
 
@@ -9,15 +18,21 @@ export class CreateCategoryDto {
   @IsString()
   description?: string;
 
-  @IsOptional()
   @IsString()
-  parentId?: string;
+  locale: string;
+
+  @IsInt()
+  level: number;
 
   @IsOptional()
   @IsString()
-  key?: string;
+  chatPrompt?: string;
 
   @IsOptional()
-  @IsJSON()
-  translations?: InputJsonValue;
+  @IsString()
+  imageName?: string;
+
+  @IsString()
+  parentId: string;
+
 }
