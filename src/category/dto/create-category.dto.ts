@@ -8,8 +8,8 @@ export class CreateCategoryDto {
   @IsString()
   _id?: string;
 
-  @IsString()
-  key: string;
+  // @IsString()
+  // key: string;
 
   @IsString()
   name: string;

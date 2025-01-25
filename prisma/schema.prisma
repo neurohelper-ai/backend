@@ -9,7 +9,7 @@ generator client {
 
 model Category {
   id          String     @id @default(uuid()) @map("_id") @db.String
-  key         String     @unique
+  // key         String?     @unique
   locale      String
   level       Int
   name        String

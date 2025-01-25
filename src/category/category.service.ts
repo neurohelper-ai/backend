@@ -12,7 +12,6 @@ export class CategoryService {
   async create(category: CreateCategoryDto) {
     return await this.prisma.category.create({
       data: {
-        key: category._id,
         locale: category.locale,
         level: category.level,
         name: category.name,
@@ -30,7 +29,7 @@ export class CategoryService {
       data: {
         name: createCategoryDto.name,
         parentId: createCategoryDto.parentId,
-        key: createCategoryDto.key,
+        // key: createCategoryDto.key,
         scenario: {
           connect: createCategoryDto.scenarios.map((id) => ({ id })),
         },
@@ -46,10 +45,13 @@ export class CategoryService {
     });
   }
 
-  async getTopCategories() {
+  async getTopCategories(locale: string) {
     const categories = await this.prisma.category.findMany({
       where: {
-        key:"en1.",
+        locale: locale,
+        // key: {
+        //   in: ["en1.", "es1.", "pt1." ,"it1.", "de1.", "fr1.", "ru1.", "tr1.", "id1.", "zh1.", "jp1.", "ko1." ],
+        // },
       },
     });
 

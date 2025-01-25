@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -32,10 +32,10 @@ export class CategoryController {
     };
   }
 
-@Get('top-categories')
-  async getTopCategories() {
-  return this.categoryService.getTopCategories();
-}
+  @Get('top-categories')
+  async getTopCategories(@Query('locale') locale: string) {
+    return this.categoryService.getTopCategories(locale);
+  }
 
 @Get('subcategories/:parentId')
   async getCategoriesByParentId(@Param('parentId') parentId: string) {

@@ -32,7 +32,7 @@ async function main() {
       await prisma.category.create({
         data: {
           id: category._id,
-          key: category._id,
+          // key: category._id,
           locale: category.locale,
           level: category.level,
           name: category.name,
